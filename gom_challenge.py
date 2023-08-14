@@ -17,7 +17,7 @@ def place(x, y, color):
     else:
         pass
 
-def longestSequential(color, board):
+def longestSequential(color, board, block_detect=False):
     def getPD(index):
         arr = np.array(board)
         return np.diag(arr, index)
@@ -26,22 +26,44 @@ def longestSequential(color, board):
         arr = np.array(board)
         return np.diag(np.fliplr(arr), index)
     
+
+    def checkLine(line, bd=block_detect):
+        if (color in line) and (len(line) > 0):
+            r = max((list(y) for (x,y) in itertools.groupby((enumerate(line)),operator.itemgetter(1)) if x == color), key=len)
+
+            if bd:
+                if (r[0][0] > 0):
+                    l_blocked = (column[r[0][0] - 1] == (color * -1))
+                else:
+                    l_blocked = True
+
+                if (r[-1][0] != (board_size - 1)):
+                    r_blocked = (column[r[-1][0] + 1] == (color * -1))
+                else:
+                    r_blocked = True
+
+                if not (l_blocked and r_blocked):
+                    sequential = (r[-1][0] - r[0][0]) + 1 if (r[-1][0] - r[0][0]) + 1 > sequential_vert else sequential_vert
+                else:
+                    sub = column[0:r[0][0]] + column[r[-1][0]:-1]
+                    print(sub, column)
+                    sequential = checkLine(sub, bd)
+
+                return sequential
+        return 0
+
     #check vert
     sequential_vert = 0
     for ind in range(board_size):
         column = [board[i][ind] for i in range(board_size)]
-
-        if color in column:
-            r = max((list(y) for (x,y) in itertools.groupby((enumerate(column)),operator.itemgetter(1)) if x == color), key=len)
-            sequential_vert = (r[-1][0] - r[0][0]) + 1 if (r[-1][0] - r[0][0]) + 1 > sequential_vert else sequential_vert
-
+        if (cLength := checkLine(column, block_detect)) > sequential_vert:
+            sequential_vert = cLength
 
     #check horiz
     sequential_hor = 0
     for row in board:
-        if color in row:
-            r = max((list(y) for (x,y) in itertools.groupby((enumerate(row)),operator.itemgetter(1)) if x == color), key=len)
-            sequential_hor = (r[-1][0] - r[0][0]) + 1 if (r[-1][0] - r[0][0]) + 1 > sequential_hor else sequential_hor
+        if (cLength := checkLine(row, block_detect)) > sequential_hor:
+            sequential_hor = cLength
 
     #check positive diag
     sequential_pd = 0
@@ -72,19 +94,19 @@ def checkWin(color, board):
 board = [
 [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], 
 [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], 
+[0, 0, 0, 0, 0, 0, -1, 0, 0, 0, 0, 0, 0], 
+[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], 
+[0, 0, 1, 1, 0, -1, 1, 1, 1, -1, 0, 0, 0], 
+[0, 0, 0, 0, 0, 0, -1, 0, 0, 0, 0, 0, 0], 
 [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], 
 [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], 
 [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], 
 [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], 
 [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], 
-[0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0], 
 [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], 
-[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], 
-[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], 
-[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], 
-[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]]
+[0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0]]
 
-
+print(longestSequential(1, board, True))
 #print(longestSequential(1, board))
 #print(checkWin(1, board))
 
@@ -94,8 +116,16 @@ board = [
 #machine learning strategy
 #minimax strategy
 #
-def lengthOptimizer(color, _board):
+def score(_board):
+    if checkWin(-1, _board):
+        return -100
+    if checkWin(1, _board):
+        return 100
 
+    return longestSequential(1, _board) - longestSequential(-1, _board)
+
+
+def minimax(color, _board, depth=3):
     options = []
 
     test_board = copy(_board)
@@ -106,10 +136,22 @@ def lengthOptimizer(color, _board):
                 options.append([(i, k), longestSequential(color, test_board)])
                 test_board[i][k] = 0
 
-    options = sorted(options, key=lambda x: x[1], reverse=True)
-    print(options)
+def lengthOptimizer(color, _board):
 
-    return options[0][0]
+    options = []
+
+    test_board = copy(_board)
+    for i in range(board_size):
+        for k in range(board_size):
+            if board[i][k] == 0:
+                test_board[i][k] = color
+                options.append([(i, k), score(test_board)])
+                test_board[i][k] = 0
+
+    options = sorted(options, key=lambda x: x[1], reverse=True)
+    options = [move for move in options if move[1] == options[0][1]]
+
+    return rand.choice(options)[0]
 
 ##### below this is draft for pygame
 def GUIWindow():
@@ -148,7 +190,7 @@ def GUIWindow():
 
         screen.blit(board_image, ((width / 2) - 500, (height / 2) - 325))
 
-        message = str(longestSequential(-1, board))
+        message = str(score(board))
 
         if checkWin(1, board):
             message = 'Black takes the dub'

@@ -8,7 +8,6 @@ import itertools, operator
 from copy import copy
 
 BOARD_SIZE = 13
-board = [[0 for i in range(BOARD_SIZE)] for j in range(BOARD_SIZE)]
 
 #This exists for debugging
 board = [
@@ -225,3 +224,29 @@ def lengthOptimizer(color, _board):
     options = [move for move in options if move[1] == options[0][1]]
 
     return rand.choice(options)[0]
+
+class Game():
+
+    #
+    # 0 -> empty space, 1 -> black, -1 -> white
+    #
+
+    BOARD_SIZE = 13
+    board = [[0 for i in range(BOARD_SIZE)] for j in range(BOARD_SIZE)]
+
+    def __init__(self, bot_func, player=1):
+        print('init mate')
+        self.bot_func = bot_func
+        self.player = player
+
+    def getBoard():
+        return board
+    
+    #in event I want to manually place a piece, probably not going to be used otherwise
+    def place(color, coords):
+        board[coords[0]][coord[1]] = color
+
+    def generateMove():
+        pass
+            
+

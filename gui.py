@@ -32,7 +32,20 @@ def GUIWindow():
 
     def game_initiating_window():
         screen.fill((40, 40, 40))
+
+        #font = pg.font.Font(None, 40)
+
+        #text = font.render(str(driver.bot_func), 1, black)
+
+        #screen.fill(white, (300, 75, 300, 75))
+        #text_rect = text.get_rect(center=(320, 320))
+        #screen.blit(text, text_rect)
+
+        #pg.display.update()
+        #time.sleep(4)
         draw_window()
+
+
 
     def draw_window():
 
@@ -111,11 +124,9 @@ def GUIWindow():
             board[coords[0]][coords[1]] = -1
         draw_window()
 
-        aiTurn = False
         if aiTurn:
-            ###ai func
-            #aiMove = lengthOptimizer(1, board)
-            aiMove = minimax(1, board, 1)[0]
+            aiMove = lengthOptimizer(1, board)
+            #aiMove = minimax(1, board, 1)[0]
             #print(aiMove)
             board[aiMove[0]][aiMove[1]] = 1
             draw_window()
@@ -134,10 +145,11 @@ def GUIWindow():
                 if(False):
                     reset_game()
 
-        print(pg.mouse.get_pos())
         draw_window()
         pg.display.update()
         CLOCK.tick(fps)
 
 if __name__ == "__main__":
+    #board = [[0 for i in range(13)] for j in range(13)]
+    #driver = Game(lengthOptimizer(1, board))
     GUIWindow()

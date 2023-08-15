@@ -37,7 +37,11 @@ def longestSequential(color, board, block_detect=True):
                 if not (l_blocked and r_blocked):
                     sequential = (r[-1][0] - r[0][0]) + 1 if (r[-1][0] - r[0][0]) + 1 > sequential_vert else sequential_vert
                 else:
-                    sub = line[0:r[0][0]] + line[r[-1][0] + 1:-1]
+                    #sub = line[0:r[0][0]] + line[r[-1][0] + 1:-1]
+                    sub = copy(line)
+                    for i in range(r[0][0], r[-1][0] + 1):
+                        sub.pop(i)
+                    print(sub, line)
                     sequential = checkLine(sub, bd)
 
                 return sequential
@@ -84,7 +88,7 @@ board = [
 [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], 
 [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], 
 [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], 
-[0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0], 
+[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], 
 [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], 
 [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], 
 [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], 
@@ -93,7 +97,7 @@ board = [
 [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], 
 [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]]
 
-print(longestSequential(-1, board, True))
+print(longestSequential(1, board, True))
 #print(longestSequential(1, board))
 #print(checkWin(1, board))
 
@@ -109,10 +113,23 @@ def prune(_board):
             else:
                 for z in range(-1, 2):
                     for w in range(-1, 2):
-                        if _board[i+z][k+w] == 0:
+                        if (i+z < 0) or (i+z > board_size) or (k+w < 0) or (k+w > board_size):
+                            continue
+                        elif _board[i+z][k+w] == 0:
                             valid[i+z][k+w] = True
     
     return valid
+
+def pieces(color):
+
+    count = 0
+
+    for i in range(board_size):
+        for k in range(board_size):
+            if board[i][k] == color:
+                count += 1
+    
+    return count
 
 def score(_board):
     if checkWin(-1, _board):
@@ -135,14 +152,14 @@ def minimax(color, _board, depth=2):
                 continue
             else:
                 test_board[i][k] = color
-                local_score = minimax(color*-1, test_board, depth-1)[1] if depth != 0 else score(test_board)
+                local_score = minimax(color * -1, test_board, depth-1)[1] if depth != 0 else score(test_board)
+                #print(local_score)
                 options.append([(i, k), local_score])
                 test_board[i][k] = 0
 
     options = sorted(options, key=lambda x: x[1], reverse=max)
     options_culled = [move for move in options if move[1] == options[0][1]] #filter out all moves that dont give best score
 
-    print(options_culled)
     return options_culled[0]
     #return rand.choice(options_culled)
 
@@ -275,7 +292,7 @@ def GUIWindow():
             ###ai func
             #aiMove = lengthOptimizer(1, board)
             aiMove = minimax(1, board, 1)[0]
-            print(aiMove)
+            #print(aiMove)
             board[aiMove[0]][aiMove[1]] = 1
             draw_window()
 

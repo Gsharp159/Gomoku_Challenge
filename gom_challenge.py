@@ -7,9 +7,26 @@ from pygame.locals import *
 import itertools, operator
 from copy import copy
 
-board_size = 13
-board = [[0 for i in range(board_size)] for j in range(board_size)]
+BOARD_SIZE = 13
+board = [[0 for i in range(BOARD_SIZE)] for j in range(BOARD_SIZE)]
 
+#This exists for debugging
+board = [
+[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], 
+[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], 
+[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], 
+[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], 
+[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], 
+[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], 
+[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], 
+[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], 
+[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], 
+[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], 
+[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], 
+[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], 
+[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]]
+
+#Returns the longest sequence of pieces for a given color. 'block_detect' determines whether it overrides blocked sequences to zero
 def longestSequential(color, board, block_detect=True):
     def getPD(index):
         arr = np.array(board)
@@ -19,6 +36,7 @@ def longestSequential(color, board, block_detect=True):
         arr = np.array(board)
         return np.diag(np.fliplr(arr), index)
     
+    #Defined so it didn't need to be rewritten 4 times for horiz, vert, etc
     def checkLine(line, bd=block_detect, _color=color):
         if (_color in line) and (len(line) > 0):
             r = max((list(y) for (x,y) in itertools.groupby((enumerate(line)),operator.itemgetter(1)) if x == _color), key=len)
@@ -29,7 +47,7 @@ def longestSequential(color, board, block_detect=True):
                 else:
                     l_blocked = True
 
-                if (r[-1][0] != (board_size - 1)):
+                if (r[-1][0] != (BOARD_SIZE - 1)):
                     r_blocked = (column[r[-1][0] + 1] == (_color * -1))
                 else:
                     r_blocked = True
@@ -51,8 +69,8 @@ def longestSequential(color, board, block_detect=True):
 
     #check vert
     sequential_vert = 0
-    for ind in range(board_size):
-        column = [board[i][ind] for i in range(board_size)]
+    for ind in range(BOARD_SIZE):
+        column = [board[i][ind] for i in range(BOARD_SIZE)]
         if (Length := checkLine(column, block_detect, color)) > sequential_vert:
             sequential_vert = Length
 
@@ -64,94 +82,77 @@ def longestSequential(color, board, block_detect=True):
 
     #check positive diag
     sequential_pd = 0
-    for ind in range((-board_size - 1), (board_size - 1)):
+    for ind in range((-BOARD_SIZE - 1), (BOARD_SIZE - 1)):
         line = getPD(ind)
         if (Length := checkLine(line, block_detect, color)) > sequential_pd:
             sequential_pd = Length
 
     #check negative diag
     sequential_nd = 0
-    for ind in range((-board_size - 1), (board_size - 1)):
+    for ind in range((-BOARD_SIZE - 1), (BOARD_SIZE - 1)):
         line = getND(ind)
         if (Length := checkLine(line, block_detect, color)) > sequential_nd:
             sequential_nd = Length
-            
+
+
     return (max(sequential_hor, sequential_vert, sequential_pd, sequential_nd))
 
+#Returns whether a color has won or not
 def checkWin(color, board):
-    if longestSequential(color, board) >= 5:
-        return True
-    else:
-        return False
+    #In the official gomoku rules, a run longer than 6 does not qualify a win. However, I am not a prude
+    return (longestSequential(color, board) >= 5)
 
-board = [
-[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], 
-[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], 
-[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], 
-[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], 
-[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], 
-[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], 
-[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], 
-[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], 
-[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], 
-[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], 
-[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], 
-[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], 
-[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]]
-
-#print(longestSequential(1, board, True))
-#print(longestSequential(1, board))
-#print(checkWin(1, board))
-
-
+#Returns all positions on the board that are adjacent to an already placed piece for either player as an array of booleans
 def prune(_board):
 
-    valid = [[False for i in range(board_size)] for k in range(board_size)]
+    valid = [[False for i in range(BOARD_SIZE)] for k in range(BOARD_SIZE)]
 
-    for i in range(board_size):
-        for k in range(board_size):
+    for i in range(BOARD_SIZE):
+        for k in range(BOARD_SIZE):
             if _board[i][k] == 0:
                 continue
             else:
                 for z in range(-1, 2):
                     for w in range(-1, 2):
-                        print(i+z, k+w)
-                        if (i+z < 0) or (i+z > board_size-1) or (k+w < 0) or (k+w > board_size-1):
+                        if (i+z < 0) or (i+z > BOARD_SIZE-1) or (k+w < 0) or (k+w > BOARD_SIZE-1):
                             continue
                         elif _board[i+z][k+w] == 0:
                             valid[i+z][k+w] = True
     
     return valid
 
+#The same as prune, but returns only the array coordinates of valid moves
 def pruneCoord(_board):
 
     valid = []
 
-    for i in range(board_size):
-        for k in range(board_size):
+    for i in range(BOARD_SIZE):
+        for k in range(BOARD_SIZE):
             if _board[i][k] == 0:
                 continue
             else:
                 for z in range(-1, 2):
                     for w in range(-1, 2):
-                        if (i+z < 0) or (i+z >= board_size) or (k+w < 0) or (k+w >= board_size):
+                        if (i+z < 0) or (i+z >= BOARD_SIZE) or (k+w < 0) or (k+w >= BOARD_SIZE):
                             continue
                         elif _board[i+z][k+w] == 0:
                             valid.append((i+z, k+w))
     
     return valid
 
+#returns the total piece count for either player
+#Probably useless, only temporary as I haven't implemented a turn counter yet
 def pieces(color):
-
     count = 0
 
-    for i in range(board_size):
-        for k in range(board_size):
+    for i in range(BOARD_SIZE):
+        for k in range(BOARD_SIZE):
             if board[i][k] == color:
                 count += 1
     
     return count
 
+#The scoring function for minimax
 def score(_board):
     if checkWin(-1, _board):
         return -1000
@@ -160,32 +161,7 @@ def score(_board):
 
     return longestSequential(1, _board) - longestSequential(-1, _board)
 
-'''
-def minimax(color, _board, depth=2):
-    options = []
-    max = True if color == 1 else False
-
-    v = prune(_board)
-
-    test_board = copy(_board)
-    for i in range(board_size):
-        for k in range(board_size):
-            if not v[i][k] or _board[i][k] != 0:
-                continue
-            else:
-                test_board[i][k] = color
-                local_score = minimax(color * -1, test_board, depth-1)[1] if depth != 0 else score(test_board)
-                #print(local_score)
-                options.append([(i, k), local_score])
-                test_board[i][k] = 0
-
-    options = sorted(options, key=lambda x: x[1], reverse=max)
-    options_culled = [move for move in options if move[1] == options[0][1]] #filter out all moves that dont give best score
-
-    return options_culled[0]
-    #return rand.choice(options_culled)
-'''
-
+#This is more a wrapper for alphabeta() which is the actual minimax. Iterates every space and returns the minimax score
 def minimax(color, _board, _depth=3):
     max = True if color == 1 else False
     values = []
@@ -203,8 +179,7 @@ def minimax(color, _board, _depth=3):
     return values[0]
     #return rand.choice(options_culled)
 
-#change it to only deal with score and leave the coord stuff to an external loop that calls root minmax on each coord
-
+#minimax with alpha beta pruning, no iterative deepening
 def alphabeta(color, _board, alpha=-100, beta=100, depth=2):
 
     temp_board = copy(_board)
@@ -233,14 +208,14 @@ def alphabeta(color, _board, alpha=-100, beta=100, depth=2):
             beta = min(beta, value)
         return value
 
-
+#Early on algorithm for the bot, mostly for debugging
 def lengthOptimizer(color, _board):
 
     options = []
 
     test_board = copy(_board)
-    for i in range(board_size):
-        for k in range(board_size):
+    for i in range(BOARD_SIZE):
+        for k in range(BOARD_SIZE):
             if board[i][k] == 0:
                 test_board[i][k] = color
                 options.append([(i, k), score(test_board)])
@@ -250,139 +225,3 @@ def lengthOptimizer(color, _board):
     options = [move for move in options if move[1] == options[0][1]]
 
     return rand.choice(options)[0]
-
-##### below this is draft for pygame
-def GUIWindow():
-    width = 1200
-    height = 800
-    white = (255, 255, 255)
-    black = (0, 0, 0)
-    fps = 30
-    CLOCK = pg.time.Clock()
-
-    pg.init()
-    screen = pg.display.set_mode((width, height), 0, fps)
-    pg.display.set_caption("shut up")
-
-    intiating_window = pg.image.load("Assets/photo_five_comp.jpg")
-    black_img = pg.image.load("Assets/black_stone.png")
-    white_img = pg.image.load("Assets/white_stone.png")
-    board_image = pg.image.load("Assets/board_image.png")
-    green_square = pg.image.load("Assets/green.png")
-
-    #resize
-    intiating_window = pg.transform.scale(intiating_window, (width, height))
-    black_img = pg.transform.scale(black_img, (35, 35))
-    white_img = pg.transform.scale(white_img, (35, 35))
-    board_image = pg.transform.scale(board_image, (650, 650))
-    green_square = pg.transform.scale(green_square, (10, 10))
-
-    def game_initiating_window():
-        #screen.blit(intiating_window, (0, 0))
-
-        #pg.display.update()
-        #time.sleep(0.5)
-        screen.fill(black)
-
-        draw_window()
-
-    def draw_window():
-
-        screen.blit(board_image, ((width / 2) - 500, (height / 2) - 325))
-
-        message = str(longestSequential(1, board, block_detect=False))
-
-        if checkWin(1, board):
-            message = 'Black takes the dub'
-        if checkWin(-1, board):
-            message = 'white *fortnite dance*'
-
-        font = pg.font.Font(None, 40)
-
-        text = font.render(message, 1, black)
-
-        screen.fill(white, ((width / 2) + 200, 75, 350, 75))
-        text_rect = text.get_rect(center=((width / 2) + 375, 115))
-        screen.blit(text, text_rect)
-
-        draw_board()
-
-        pg.display.update()
-
-    def draw_board():
-        #first row is 87, last is 677.5 dif is 45.4
-        #first col is 112, last is 702.5
-        #row * 45.4 + 87 ? smth like this
-
-        v = prune(board)
-
-        for i in range(13):
-            for k in range(13):
-                if board[i][k] == 0:
-                    if v[i][k]:
-                        screen.blit(green_square, ((i * 49.2) + 125, (k * 49.2)+ 100))
-                    continue
-                if board[i][k] == -1:
-                    screen.blit(white_img, ((i * 49.2) + 112, (k * 49.2)+ 87))
-                if board[i][k] == 1:
-                    screen.blit(black_img, ((i * 49.2) + 112, (k * 49.2)+ 87))
-
-
-    def user_click():
-
-        first = (112, 87)
-        last = (737.5, 702.5)
-
-        x, y = pg.mouse.get_pos()
-        _coords = [0, 0]
-
-        if not ((x >= 112) and (x <= 737.5)):
-            pass#raise Exception('ur only allowed to click the board rn bb')
-        else:
-            x = (x - 112)
-            x = round(x / (625.5 / 12))
-
-            _coords[0] = x
-
-        if not ((y >= 87) and (y <= 737.5)):
-            pass#raise Exception('ur only allowed to click the board rn bb')
-        else:
-            y = (y - 87)
-            y = round(y / (625.5 / 12))
-
-            _coords[1] = y
-
-        aiTurn = True
-        if board[_coords[0]][_coords[1]] != 0:
-            aiTurn = False
-        else:
-            board[_coords[0]][_coords[1]] = -1
-        draw_window()
-
-        if aiTurn:
-            ###ai func
-            #aiMove = lengthOptimizer(1, board)
-            aiMove = minimax(1, board, _depth=2)[0]
-            #print(aiMove)
-            board[aiMove[0]][aiMove[1]] = 1
-            draw_window()
-
-    game_initiating_window()
-
-    while(True):
-        for event in pg.event.get():
-            if event.type == pg.QUIT:
-                pg.quit()
-                sys.exit()
-
-            if any(pg.mouse.get_pressed()):
-                user_click()
-
-                if(False):
-                    reset_game()
-
-        draw_window()
-        pg.display.update()
-        CLOCK.tick(fps)
-
-GUIWindow()

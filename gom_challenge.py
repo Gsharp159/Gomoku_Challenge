@@ -38,11 +38,13 @@ def longestSequential(color, board, block_detect=True):
                     sequential = (r[-1][0] - r[0][0]) + 1 if (r[-1][0] - r[0][0]) + 1 > sequential_vert else sequential_vert
                 else:
                     #sub = line[0:r[0][0]] + line[r[-1][0] + 1:-1]
-                    sub = copy(line)
-                    for i in range(r[0][0], r[-1][0] + 1):
-                        sub.pop(i)
-                    print(sub, line)
-                    sequential = checkLine(sub, bd)
+                    sub = list(copy(line))
+                    if (r[0][0]-r[-1][0]) > 0:
+                        for i in range(r[0][0], r[-1][0] + 1):
+                            sub.pop(i)
+                        sequential = checkLine(sub, bd)
+                    else:
+                        sequential = 0
 
                 return sequential
         return 0
@@ -97,7 +99,7 @@ board = [
 [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], 
 [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]]
 
-print(longestSequential(1, board, True))
+#print(longestSequential(1, board, True))
 #print(longestSequential(1, board))
 #print(checkWin(1, board))
 
@@ -113,10 +115,29 @@ def prune(_board):
             else:
                 for z in range(-1, 2):
                     for w in range(-1, 2):
-                        if (i+z < 0) or (i+z > board_size) or (k+w < 0) or (k+w > board_size):
+                        print(i+z, k+w)
+                        if (i+z < 0) or (i+z > board_size-1) or (k+w < 0) or (k+w > board_size-1):
                             continue
                         elif _board[i+z][k+w] == 0:
                             valid[i+z][k+w] = True
+    
+    return valid
+
+def pruneCoord(_board):
+
+    valid = []
+
+    for i in range(board_size):
+        for k in range(board_size):
+            if _board[i][k] == 0:
+                continue
+            else:
+                for z in range(-1, 2):
+                    for w in range(-1, 2):
+                        if (i+z < 0) or (i+z >= board_size) or (k+w < 0) or (k+w >= board_size):
+                            continue
+                        elif _board[i+z][k+w] == 0:
+                            valid.append((i+z, k+w))
     
     return valid
 
@@ -139,6 +160,7 @@ def score(_board):
 
     return longestSequential(1, _board) - longestSequential(-1, _board)
 
+'''
 def minimax(color, _board, depth=2):
     options = []
     max = True if color == 1 else False
@@ -162,6 +184,55 @@ def minimax(color, _board, depth=2):
 
     return options_culled[0]
     #return rand.choice(options_culled)
+'''
+
+def minimax(color, _board, _depth=3):
+    max = True if color == 1 else False
+    values = []
+    temp = copy(_board)
+    coords = pruneCoord(temp)
+    for i, k in coords:
+            temp[i][k] = color
+            values.append([(i, k), alphabeta(color, temp, depth=_depth)])
+            temp[i][k] = 0
+    
+    values = sorted(values, key=lambda x: x[1], reverse=max)
+    values_cull = [move for move in values if move[1] == values[0][1]] #filter out all moves that dont give best score
+
+    print(values)
+    return values[0]
+    #return rand.choice(options_culled)
+
+#change it to only deal with score and leave the coord stuff to an external loop that calls root minmax on each coord
+
+def alphabeta(color, _board, alpha=-100, beta=100, depth=2):
+
+    temp_board = copy(_board)
+    v = pruneCoord(temp_board)
+
+    if depth == 0 or (checkWin(1, _board) or checkWin(-1, _board)):
+        return score(_board)
+    if color == 1:
+        value = -100
+        for coords in v:
+            temp_board[coords[0]][coords[1]] = color
+            value = max(value, alphabeta(color * -1, temp_board, depth=depth-1))
+            temp_board[coords[0]][coords[1]] = 0
+            if value > beta:
+                break
+            alpha = max(alpha, value)
+        return value
+    else:
+        value = 100
+        for coords in v:
+            temp_board[coords[0]][coords[1]] = color
+            value = min(value, alphabeta(color * -1, temp_board, depth=depth-1))
+            temp_board[coords[0]][coords[1]] = 0
+            if value < alpha:
+                break
+            beta = min(beta, value)
+        return value
+
 
 def lengthOptimizer(color, _board):
 
@@ -263,7 +334,7 @@ def GUIWindow():
         last = (737.5, 702.5)
 
         x, y = pg.mouse.get_pos()
-        coords = [0, 0]
+        _coords = [0, 0]
 
         if not ((x >= 112) and (x <= 737.5)):
             pass#raise Exception('ur only allowed to click the board rn bb')
@@ -271,7 +342,7 @@ def GUIWindow():
             x = (x - 112)
             x = round(x / (625.5 / 12))
 
-            coords[0] = x
+            _coords[0] = x
 
         if not ((y >= 87) and (y <= 737.5)):
             pass#raise Exception('ur only allowed to click the board rn bb')
@@ -279,19 +350,19 @@ def GUIWindow():
             y = (y - 87)
             y = round(y / (625.5 / 12))
 
-            coords[1] = y
+            _coords[1] = y
 
         aiTurn = True
-        if board[coords[0]][coords[1]] != 0:
+        if board[_coords[0]][_coords[1]] != 0:
             aiTurn = False
         else:
-            board[coords[0]][coords[1]] = -1
+            board[_coords[0]][_coords[1]] = -1
         draw_window()
 
         if aiTurn:
             ###ai func
             #aiMove = lengthOptimizer(1, board)
-            aiMove = minimax(1, board, 1)[0]
+            aiMove = minimax(1, board, _depth=2)[0]
             #print(aiMove)
             board[aiMove[0]][aiMove[1]] = 1
             draw_window()

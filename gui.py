@@ -49,8 +49,7 @@ def GUIWindow():
 
     def draw_window():
 
-        #((width / 2) - 500, (height / 2) - 325)
-        screen.blit(board_image, (35, 35)) #subtract 65
+        screen.blit(board_image, (35, 35)) 
 
         message = str(longestSequential(1, board, block_detect=False))
 
@@ -75,12 +74,6 @@ def GUIWindow():
         pg.display.update()
 
     def draw_board():
-        #first row is 87, last is 677.5 dif is 45.4
-        #first col is 112, last is 702.5
-        #row * 45.4 + 87 ? smth like this
-
-        #69, 71 = first space
-        #70, 732
 
         v = prune(board)
 
@@ -102,7 +95,8 @@ def GUIWindow():
         coords = [0, 0]
 
         if not ((x >= 35) and (x <= 765)):
-            pass#raise Exception('ur only allowed to click the board rn bb')
+            #clicked outside board
+            pass
         else:
             x = (x - 35)
             x = round(x / (730 / 12))
@@ -110,7 +104,8 @@ def GUIWindow():
             coords[0] = x
 
         if not ((y >= 35) and (y <= 765)):
-            pass#raise Exception('ur only allowed to click the board rn bb')
+            #clicked outside board
+            pass
         else:
             y = (y - 35)
             y = round(y / (730 / 12))
@@ -125,9 +120,8 @@ def GUIWindow():
         draw_window()
 
         if aiTurn:
-            aiMove = lengthOptimizer(1, board)
-            #aiMove = minimax(1, board, 1)[0]
-            #print(aiMove)
+            #aiMove = lengthOptimizer(1, board)
+            aiMove = minimax(1, board, 2)[0]
             board[aiMove[0]][aiMove[1]] = 1
             draw_window()
 

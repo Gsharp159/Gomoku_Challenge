@@ -172,7 +172,7 @@ def minimax(color, _board, _depth=3):
             temp[i][k] = 0
     
     values = sorted(values, key=lambda x: x[1], reverse=max)
-    values_cull = [move for move in values if move[1] == values[0][1]] #filter out all moves that dont give best score
+    values_cull = [move for move in values if move[1] == values[0][1]] #filter out all moves that dont give best score 
 
     print(values)
     return values[0]
@@ -242,7 +242,6 @@ class Game():
     def getBoard():
         return board
     
-    #in event I want to manually place a piece, probably not going to be used otherwise
     def place(color, coords):
         board[coords[0]][coord[1]] = color
 

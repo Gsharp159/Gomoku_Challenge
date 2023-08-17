@@ -121,7 +121,7 @@ def GUIWindow():
 
         if aiTurn:
             #aiMove = lengthOptimizer(1, board)
-            aiMove = minimax(1, board, 2)[0]
+            aiMove = minimax(1, board, _depth=2)[0]
             board[aiMove[0]][aiMove[1]] = 1
             draw_window()
 

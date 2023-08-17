@@ -11,19 +11,19 @@ BOARD_SIZE = 13
 
 #This exists for debugging
 board = [
+[1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], 
 [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], 
 [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], 
 [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], 
 [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], 
 [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], 
 [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], 
+[0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0], 
 [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], 
 [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], 
 [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], 
 [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], 
-[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], 
-[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], 
-[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]]
+[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]]
 
 #Returns the longest sequence of pieces for a given color. 'block_detect' determines whether it overrides blocked sequences to zero
 def longestSequential(color, board, block_detect=True):
@@ -159,6 +159,35 @@ def score(_board):
         return 1000
 
     return longestSequential(1, _board) - longestSequential(-1, _board)
+
+def pieceLocations(_board, all=True, color=0):
+
+    coords = []
+    _board = np.array(_board)
+    unpacked = _board.flatten()
+
+    if all or color == 0:
+        for i in range(len(unpacked)):
+            if unpacked[i] != 0:
+                coords.append((i // BOARD_SIZE, i % BOARD_SIZE))
+    else:
+        for i in range(len(unpacked)):
+            if unpacked[i] == color:
+                coords.append((i // BOARD_SIZE, i % BOARD_SIZE))
+
+    return coords
+
+#return moves that are part of a consecutive chain of either players pieces, or any fatal moves
+def evaluateMoves(_board):
+    #does a piece have a pieve next to it? does that piece have a piece next to it? if chain more that threshold, go to piece 1 and go opposite direction
+    #if this itself isnt efficient enough, could try running only on pruned coords
+    pieces = pieceLocations(_board, False, 1)
+    for coord in pieces:
+        #if nearby piece in direction
+            #if that direction on nearby piece, etc (recursion orrrrrr?)
+    pass
+
+evaluateMoves(board)
 
 #This is more a wrapper for alphabeta() which is the actual minimax. Iterates every space and returns the minimax score
 def minimax(color, _board, _depth=3):

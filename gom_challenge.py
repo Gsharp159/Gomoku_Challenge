@@ -11,19 +11,19 @@ BOARD_SIZE = 13
 
 #This exists for debugging
 board = [
-[1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], 
 [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], 
 [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], 
 [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], 
 [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], 
 [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], 
 [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], 
-[0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0], 
 [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], 
 [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], 
 [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], 
 [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], 
-[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]]
+[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], 
+[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], 
+[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]]
 
 #Returns the longest sequence of pieces for a given color. 'block_detect' determines whether it overrides blocked sequences to zero
 def longestSequential(color, board, block_detect=True):
@@ -179,15 +179,35 @@ def pieceLocations(_board, all=True, color=0):
 
 #return moves that are part of a consecutive chain of either players pieces, or any fatal moves
 def evaluateMoves(_board):
+
+    #TODO fix inefficiency, checks pieces multiple times and overwrites their chain lengths
+
+    moves = [[0 for i in range(BOARD_SIZE)] for j in range(BOARD_SIZE)]
+    #pieces = pieceLocations(_board, False, 1)
+
+
+    #start = tuple coord, direction = tuple difference
+    def isChain(start, direction, n=1):
+        if max(start[0], start[1]) == BOARD_SIZE - 1 or min(start[0], start[1]) == 0:
+            return n
+        elif _board[start[0] + direction[0]][start[1] + direction[1]] != 0:
+            return isChain((start[0] + direction[0], start[1] + direction[1]), direction, n+1)
+        else:
+            return n
+
     #does a piece have a pieve next to it? does that piece have a piece next to it? if chain more that threshold, go to piece 1 and go opposite direction
     #if this itself isnt efficient enough, could try running only on pruned coords
-    pieces = pieceLocations(_board, False, 1)
-    for coord in pieces:
-        #if nearby piece in direction
-            #if that direction on nearby piece, etc (recursion orrrrrr?)
-    pass
+    for i in range(BOARD_SIZE ** 2):
+        coord = (i // BOARD_SIZE, i % BOARD_SIZE)
+        for z in range(-1, 2):
+            for w in range(-1, 2):
+                if not (max(coord[0], coord[1]) == BOARD_SIZE - 1 or min(coord[0], coord[1]) == 0):
+                    if _board[coord[0] + z][coord[1] + w] != 0 and (not z == w == 0) and (_board[coord[0]][coord[1]] == 0):
+                        moves[coord[0]][coord[1]] = isChain((coord[0] + z, coord[1] + w), (z, w))
 
-evaluateMoves(board)
+    moves = [[(i // BOARD_SIZE, i % BOARD_SIZE), moves[i // BOARD_SIZE][i % BOARD_SIZE]] for i in range(BOARD_SIZE ** 2)]
+    moves = sorted(moves, key=lambda x: x[1], reverse=True)
+    return moves
 
 #This is more a wrapper for alphabeta() which is the actual minimax. Iterates every space and returns the minimax score
 def minimax(color, _board, _depth=3):
@@ -197,8 +217,12 @@ def minimax(color, _board, _depth=3):
     coords = pruneCoord(temp)
     for i, k in coords:
             temp[i][k] = color
-            values.append([(i, k), alphabeta(color, temp, depth=_depth)])
+            values.append(s := [(i, k), alphabeta(color, temp, depth=_depth)])
             temp[i][k] = 0
+
+            #temporary test thing
+            if s[1] == 1000 or s[1] == -1000:
+                return s
     
     values = sorted(values, key=lambda x: x[1], reverse=max)
     values_cull = [move for move in values if move[1] == values[0][1]] #filter out all moves that dont give best score 
@@ -211,7 +235,8 @@ def minimax(color, _board, _depth=3):
 def alphabeta(color, _board, alpha=-100, beta=100, depth=2):
 
     temp_board = copy(_board)
-    v = pruneCoord(temp_board)
+    #v = pruneCoord(temp_board)
+    v = [el[0] if el[0] != 0 else None for el in evaluateMoves(temp_board)]#[0:10]
 
     if depth == 0 or (checkWin(1, _board) or checkWin(-1, _board)):
         return score(_board)

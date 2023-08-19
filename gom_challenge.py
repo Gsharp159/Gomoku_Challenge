@@ -15,7 +15,7 @@ board = [
 [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], 
 [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], 
 [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], 
-[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], 
+[0, 0, 0, 0, 0, 0, -1, -1, 0, 0, 0, 0, 0], 
 [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], 
 [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], 
 [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], 
@@ -64,6 +64,13 @@ def longestSequential(color, board, block_detect=True):
                         sequential = 0
 
                 return sequential
+
+            else:
+                #
+                #Case: block detect False, incomplete
+                #
+                pass
+
         return 0
 
     #check vert
@@ -99,7 +106,7 @@ def longestSequential(color, board, block_detect=True):
 #Returns whether a color has won or not
 def checkWin(color, board):
     #In the official gomoku rules, a run longer than 6 does not qualify a win. However, I am not a prude
-    return (longestSequential(color, board) >= 5)
+    return (longestSequential(color, board) == 5)
 
 #Returns all positions on the board that are adjacent to an already placed piece for either player as an array of booleans
 def prune(_board):
@@ -180,6 +187,8 @@ def pieceLocations(_board, all=True, color=0):
 #return moves that are part of a consecutive chain of either players pieces, or any fatal moves
 def evaluateMoves(_board):
 
+    l_board = copy(_board)
+
     #TODO fix inefficiency, checks pieces multiple times and overwrites their chain lengths
 
     moves = [[0 for i in range(BOARD_SIZE)] for j in range(BOARD_SIZE)]
@@ -190,7 +199,7 @@ def evaluateMoves(_board):
     def isChain(start, direction, n=1):
         if max(start[0], start[1]) == BOARD_SIZE - 1 or min(start[0], start[1]) == 0:
             return n
-        elif _board[start[0] + direction[0]][start[1] + direction[1]] != 0:
+        elif l_board[start[0] + direction[0]][start[1] + direction[1]] != 0:
             return isChain((start[0] + direction[0], start[1] + direction[1]), direction, n+1)
         else:
             return n
@@ -202,7 +211,7 @@ def evaluateMoves(_board):
         for z in range(-1, 2):
             for w in range(-1, 2):
                 if not (max(coord[0], coord[1]) == BOARD_SIZE - 1 or min(coord[0], coord[1]) == 0):
-                    if _board[coord[0] + z][coord[1] + w] != 0 and (not z == w == 0) and (_board[coord[0]][coord[1]] == 0):
+                    if l_board[coord[0] + z][coord[1] + w] != 0 and (not z == w == 0) and (l_board[coord[0]][coord[1]] == 0):
                         moves[coord[0]][coord[1]] = isChain((coord[0] + z, coord[1] + w), (z, w))
 
     moves = [[(i // BOARD_SIZE, i % BOARD_SIZE), moves[i // BOARD_SIZE][i % BOARD_SIZE]] for i in range(BOARD_SIZE ** 2)]
@@ -216,16 +225,13 @@ def minimax(color, _board, _depth=3):
     temp = copy(_board)
     coords = pruneCoord(temp)
     for i, k in coords:
-            temp[i][k] = color
-            values.append(s := [(i, k), alphabeta(color, temp, depth=_depth)])
-            temp[i][k] = 0
-
-            #temporary test thing
-            if s[1] == 1000 or s[1] == -1000:
-                return s
+        print((i, k), coords)
+        temp[i][k] = color
+        values.append([(i, k), alphabeta(color, temp, depth=_depth)])
+        temp[i][k] = 0
     
     values = sorted(values, key=lambda x: x[1], reverse=max)
-    values_cull = [move for move in values if move[1] == values[0][1]] #filter out all moves that dont give best score 
+    #values_cull = [move for move in values if move[1] == values[0][1]] #filter out all moves that dont give best score 
 
     print(values)
     return values[0]
@@ -236,7 +242,7 @@ def alphabeta(color, _board, alpha=-100, beta=100, depth=2):
 
     temp_board = copy(_board)
     #v = pruneCoord(temp_board)
-    v = [el[0] if el[0] != 0 else None for el in evaluateMoves(temp_board)]#[0:10]
+    v = [a[0] for a in evaluateMoves(temp_board)][0:10]
 
     if depth == 0 or (checkWin(1, _board) or checkWin(-1, _board)):
         return score(_board)
@@ -244,7 +250,7 @@ def alphabeta(color, _board, alpha=-100, beta=100, depth=2):
         value = -100
         for coords in v:
             temp_board[coords[0]][coords[1]] = color
-            value = max(value, alphabeta(color * -1, temp_board, depth=depth-1))
+            value = max(value, alphabeta(-1, temp_board, depth=depth-1))
             temp_board[coords[0]][coords[1]] = 0
             if value > beta:
                 break
@@ -254,7 +260,7 @@ def alphabeta(color, _board, alpha=-100, beta=100, depth=2):
         value = 100
         for coords in v:
             temp_board[coords[0]][coords[1]] = color
-            value = min(value, alphabeta(color * -1, temp_board, depth=depth-1))
+            value = min(value, alphabeta(1, temp_board, depth=depth-1))
             temp_board[coords[0]][coords[1]] = 0
             if value < alpha:
                 break

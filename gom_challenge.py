@@ -108,6 +108,7 @@ def checkWin(color, board):
     #In the official gomoku rules, a run longer than 6 does not qualify a win. However, I am not a prude
     return (longestSequential(color, board) == 5)
 
+#TODO if no pieces, return all
 #Returns all positions on the board that are adjacent to an already placed piece for either player as an array of booleans
 def prune(_board):
 

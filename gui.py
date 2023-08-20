@@ -144,6 +144,4 @@ def GUIWindow():
         CLOCK.tick(fps)
 
 if __name__ == "__main__":
-    #board = [[0 for i in range(13)] for j in range(13)]
-    #driver = Game(lengthOptimizer(1, board))
     GUIWindow()

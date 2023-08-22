@@ -5,7 +5,7 @@ import sys
 import time
 from pygame.locals import *
 import itertools, operator
-from copy import copy
+from copy import *
 
 BOARD_SIZE = 13
 
@@ -15,9 +15,9 @@ board = [
 [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], 
 [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], 
 [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], 
-[0, 0, 0, 0, 0, 0, -1, -1, 0, 0, 0, 0, 0], 
-[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], 
-[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], 
+[0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0], 
+[0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0], 
+[0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0], 
 [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], 
 [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], 
 [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], 
@@ -168,6 +168,8 @@ def score(_board):
 
     return longestSequential(1, _board) - longestSequential(-1, _board)
 
+#in the name
+#needs to be updated?
 def pieceLocations(_board, all=True, color=0):
 
     coords = []
@@ -186,7 +188,7 @@ def pieceLocations(_board, all=True, color=0):
     return coords
 
 #return moves that are part of a consecutive chain of either players pieces, or any fatal moves
-def evaluateMoves(_board):
+def evaluateMoves(_board, coords=True, onPiece=False):
 
     l_board = copy(_board)
 
@@ -207,17 +209,91 @@ def evaluateMoves(_board):
 
     #does a piece have a pieve next to it? does that piece have a piece next to it? if chain more that threshold, go to piece 1 and go opposite direction
     #if this itself isnt efficient enough, could try running only on pruned coords
-    for i in range(BOARD_SIZE ** 2):
-        coord = (i // BOARD_SIZE, i % BOARD_SIZE)
-        for z in range(-1, 2):
-            for w in range(-1, 2):
-                if not (max(coord[0], coord[1]) == BOARD_SIZE - 1 or min(coord[0], coord[1]) == 0):
-                    if l_board[coord[0] + z][coord[1] + w] != 0 and (not z == w == 0) and (l_board[coord[0]][coord[1]] == 0):
-                        moves[coord[0]][coord[1]] = isChain((coord[0] + z, coord[1] + w), (z, w))
+    if onPiece:
+        for i in range(BOARD_SIZE ** 2):
+            coord = (i // BOARD_SIZE, i % BOARD_SIZE)
+            possible_moves = []
+            for z in range(-1, 2):
+                for w in range(-1, 2):
+                    if l_board[coord[0]][coord[1]] != 0 and (not (max(coord[0] + z, coord[1] + w) > BOARD_SIZE - 1 or min(coord[0] + z, coord[1] + w) < 0)) and l_board[coord[0] + z][coord[1] + w] != 0 and (not z == w == 0):
+                        possible_moves.append(isChain((coord[0] + z, coord[1] + w), (z, w)) + 1)
+            moves[coord[0]][coord[1]] = max(possible_moves) if possible_moves else 0
 
-    moves = [[(i // BOARD_SIZE, i % BOARD_SIZE), moves[i // BOARD_SIZE][i % BOARD_SIZE]] for i in range(BOARD_SIZE ** 2)]
-    moves = sorted(moves, key=lambda x: x[1], reverse=True)
+    else:
+        for i in range(BOARD_SIZE ** 2):
+            coord = (i // BOARD_SIZE, i % BOARD_SIZE)
+            for z in range(-1, 2):
+                for w in range(-1, 2):
+                    if not (max(coord[0], coord[1]) == BOARD_SIZE - 1 or min(coord[0], coord[1]) == 0):
+                        if l_board[coord[0] + z][coord[1] + w] != 0 and (not z == w == 0) and (l_board[coord[0]][coord[1]] == 0):
+                            moves[coord[0]][coord[1]] = isChain((coord[0] + z, coord[1] + w), (z, w))
+
+    if coords:
+        moves = [[(i // BOARD_SIZE, i % BOARD_SIZE), moves[i // BOARD_SIZE][i % BOARD_SIZE]] for i in range(BOARD_SIZE ** 2)]
+        moves = sorted(moves, key=lambda x: x[1], reverse=True)
+
     return moves
+
+def threatSpace(_board, color):
+    #? uh? same as isChain in evaluateMoves, but rather than checking consecutive, check specific patterns
+    #open 4
+
+    #single block 4
+
+    #open 3
+
+    #broken 3
+    return None
+
+def linesAnalysis(_board, color):
+    #should lines be weighted differently for threat/ non threat (i.e built out of opposite vs self color)
+    #coefficient of chainlength
+    #coefficient per player
+    #add lines vs chain coefficient
+
+    _board = deepcopy(_board)
+    pieces = pieceLocations(_board)
+    lines = [[0 for i in range(BOARD_SIZE)] for i in range(BOARD_SIZE)]
+    chains = evaluateMoves(_board, coords=False, onPiece=True)
+
+    #hard to program this efficiently oopsie, stamp arrays kinda thing?
+    for x, y in pieces:
+        for i in reversed(range(1, 5)):
+            change = chains[x][y] if chains[x][y] > 0 else 1 * (5 - i)#(chains[x][y] if chains[x][y] > 0 else 1) * i
+
+
+            if (x - i) >= 0:
+                lines[x - i][y] += change
+
+                if y + i < BOARD_SIZE:
+                    lines[x - i][y + i] += change
+
+                if y - i >= 0:
+                    lines[x - i][y - i] += change
+
+            if x + i < BOARD_SIZE:
+                lines[x + i][y] += change
+
+                if y + i < BOARD_SIZE:
+                    lines[x + i][y + i] += change
+
+                if y - i >= 0:
+                    lines[x + i][y - i] += change
+
+            if y - i >= 0:
+                lines[x][y - i] += change
+
+            if y + i < BOARD_SIZE:
+                lines[x][y + i] += change
+
+    for x, y in pieces:
+        lines[x][y] = 0
+
+    return lines
+
+print(np.array(board))
+print(np.array(evaluateMoves(board, coords=False, onPiece=True)))
+print(np.array(linesAnalysis(board, 0)))
 
 #This is more a wrapper for alphabeta() which is the actual minimax. Iterates every space and returns the minimax score
 def minimax(color, _board, _depth=3):

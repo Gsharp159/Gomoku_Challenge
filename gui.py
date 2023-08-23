@@ -1,5 +1,6 @@
 from gom_challenge import *
 import pygame as pg
+import tensorflow as tf
 
 #
 #End goal is to migrate away from pygame. I'm using it for simplicity at the moment
@@ -12,6 +13,9 @@ def GUIWindow():
     black = (0, 0, 0)
     fps = 30
     CLOCK = pg.time.Clock()
+    global updatemsg, message
+    updatemsg = True
+    message = 'init'
 
     pg.init()
     screen = pg.display.set_mode((width, height), 0, fps)
@@ -29,6 +33,8 @@ def GUIWindow():
     white_img = pg.transform.scale(white_img, (40, 40))
     board_image = pg.transform.scale(board_image, (730, 730)) #650->730 scale = 1.123
     green_square = pg.transform.scale(green_square, (14, 14))
+
+    model = tf.keras.models.load_model("models/nn_0.3")
 
     def game_initiating_window():
         screen.fill((40, 40, 40))
@@ -48,15 +54,19 @@ def GUIWindow():
 
 
     def draw_window():
-
         screen.blit(board_image, (35, 35)) 
+        global updatemsg, message
 
-        message = str(longestSequential(1, board, block_detect=False))
+        if updatemsg:
+            out = model((np.array(board).flatten()).reshape(1, 169))
+            message = str([round(n, 2) for n in tf.nn.softmax(out).numpy()[0]])
 
-        if checkWin(1, board):
-            message = 'Black takes the dub'
-        if checkWin(-1, board):
-            message = 'white *fortnite dance*'
+            if checkWin(1, board):
+                message = 'Black takes the dub'
+            if checkWin(-1, board):
+                message = 'white *fortnite dance*'
+
+            updatemsg = False
 
         font = pg.font.Font(None, 40)
 
@@ -90,6 +100,7 @@ def GUIWindow():
 
 
     def user_click():
+        global updatemsg
 
         x, y = pg.mouse.get_pos()
         coords = [0, 0]
@@ -120,11 +131,12 @@ def GUIWindow():
         draw_window()
 
         if aiTurn:
-            #aiMove = lengthOptimizer(1, board)
-            aiMove = minimax(1, board, _depth=2)[0]
+            aiMove = lengthOptimizer(1, board)
+            #aiMove = minimax(1, board, _depth=2)[0]
             board[aiMove[0]][aiMove[1]] = 1
             draw_window()
 
+        updatemsg = True
     game_initiating_window()
 
     while(True):

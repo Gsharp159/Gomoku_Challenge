@@ -15,8 +15,8 @@ board = [
 [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], 
 [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], 
 [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], 
-[0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0], 
-[0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0], 
+[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], 
+[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], 
 [0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0], 
 [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], 
 [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], 
@@ -291,9 +291,9 @@ def linesAnalysis(_board, color):
 
     return lines
 
-print(np.array(board))
-print(np.array(evaluateMoves(board, coords=False, onPiece=True)))
-print(np.array(linesAnalysis(board, 0)))
+#print(np.array(board))
+#print(np.array(evaluateMoves(board, coords=False, onPiece=True)))
+#print(np.array(linesAnalysis(board, 0)))
 
 #This is more a wrapper for alphabeta() which is the actual minimax. Iterates every space and returns the minimax score
 def minimax(color, _board, _depth=3):

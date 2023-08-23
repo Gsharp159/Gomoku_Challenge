@@ -21,6 +21,19 @@ board = np.array([
 [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], 
 [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]])
 '''
+def recur(_board):
+    possible_moves = gom.pieceLocations(_board)
+    layer = [move, 0 for move in possible_moves]
+
+'''
+
+
+
+
+
+
+
+'''
 class Tree():
 
     wins = 0
@@ -77,25 +90,45 @@ class Node():
             if not move[1]:
                 res.append(move[0])
 '''
+'''
 #get parent info method
 class Node():
 
-    children = []
+    children = {}
+    wins = 0
+    games = 0
 
-    def __init__(self, board_state, color):
+    def __init__(self, board_state, move, color, parent):
         self.board_state = copy.deepcopy(board_state)
         self.color = color
+        self.move = move
+        self.parent = parent
 
     def addChild(self, obj):
-        self.children.append(obj)
+        self.children[obj.move] = obj
+
+    def getParent(self):
+        return self.parent
+
+    def getAll(self):
+        pass
 
 
-mom = Node(board, 1)
-#do a move, pass temp board into child
-mom.addChild(Node(temp, -1))
 
 
 
+
+mom = Node(board, None, 1, None)
+temp = copy.deepcopy(board)
+temp[0][0] = 1
+mom.addChild(Node(temp, (0, 0), 1, mom))
+temp[0][1] = -1
+mom.children[(0, 0)].addChild(Node(temp, (0, 1), -1, mom.children[(0, 0)]))
+
+print([(key, value) for (key, value) in mom.children])
+a = Node(temp, (0, 3), 1, mom.children[(0, 0)])
+print(a.getParent().move)
+'''
 
 
 '''
@@ -122,7 +155,7 @@ tree.getAllNodes()
 
 
 
-'''
+
 #board = root
 #select a random move
 def playout(_board, color):
@@ -149,7 +182,7 @@ def randState(_board, max):
         moves = gom.pruneCoord(temp_board)
         player = ((tcount % 2) * 2) - 1
         if not moves:
-            return 0
+            return (temp_board, 0)
         move = r.choices(moves)[0]
         temp_board[move[0]][move[1]] = player
         tcount += 1
@@ -159,19 +192,29 @@ def randState(_board, max):
 
 
 
-with open('data.csv', 'w', newline='') as csvfile:
-    csvwriter = csv.writer(csvfile, lineterminator='\n', delimiter=';', quoting = csv.QUOTE_NONE)
+with open('data.csv', 'a', newline='') as csvfile:
+    csvwriter = csv.writer(csvfile, lineterminator='\n', delimiter=',')
 
-    for i in range(50):
+    for i in range(200000):
         row = []
         state = randState(board, 24)
+
         flat = np.array(state[0]).flatten()
-        row.append(flat)
+
+        for n in flat:
+            row.append(n)
+
         p = playout(state[0], state[1])
-        row.append(p)#[1, 0] if p == 1 else [0, 1])
+
+        row.append(1 if p == 1 else 0)
+        row.append(1 if p == 0 else 0)
+        row.append(1 if p == -1 else 0)#[1, 0] if p == 1 else [0, 1])
 
         csvwriter.writerow(row)
-'''
+        if (i % 1000 == 0):
+            print(i, '/', '200')
+
+
 '''
 #-------------
 

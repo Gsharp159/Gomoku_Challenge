@@ -1,5 +1,5 @@
-__pycache__/gom_challenge.cpython-311.pyc
 .DS_Store
 models/
-Gomoku/algorithms/__pycache__/__init__.cpython-311.pyc
-Gomoku/__pycache__/__init__.cpython-311.pyc
+\Gomoku\gomoku\__pycache__
+Gomoku/__init__.py
+*.pyc

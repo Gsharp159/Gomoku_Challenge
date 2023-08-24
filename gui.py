@@ -1,15 +1,17 @@
-import Gomoku.algorithms
+import gomoku.algorithms
 import pygame as pg
 import tensorflow as tf
 import numpy as np
+import sys
 from copy import copy
 
+print('done imports')
 #
 #End goal is to migrate away from pygame. I'm using it for simplicity at the moment
 #
 
 def GUIWindow():
-    board = Gomoku.board
+    board = gomoku.board
     width = 1200
     height = 800
     white = (255, 255, 255)
@@ -37,9 +39,9 @@ def GUIWindow():
     board_image = pg.transform.scale(board_image, (730, 730)) #650->730 scale = 1.123
     green_square = pg.transform.scale(green_square, (14, 14))
 
-    model = tf.keras.models.load_model("models/dq_0.1.3", compile=False)
-    model.compile(loss='', optimizer = tf.keras.optimizers.legacy.Adam())
-    print(model(np.array(board).flatten().reshape(1, 169)))
+    #model = tf.keras.models.load_model("models/dq_0.1.3", compile=False)
+    #model.compile(loss='', optimizer = tf.keras.optimizers.legacy.Adam())
+    #print(model(np.array(board).flatten().reshape(1, 169)))
 
     def game_initiating_window():
         screen.fill((40, 40, 40))
@@ -67,9 +69,9 @@ def GUIWindow():
             #message = str([round(n, 2) for n in tf.nn.softmax(out).numpy()[0]])
             message = 'hi'
 
-            if Gomoku.checkWin(1, board):
+            if gomoku.checkWin(1, board):
                 message = 'Black takes the dub'
-            if Gomoku.checkWin(-1, board):
+            if gomoku.checkWin(-1, board):
                 message = 'white *fortnite dance*'
 
             updatemsg = False
@@ -91,7 +93,7 @@ def GUIWindow():
 
     def draw_board():
 
-        v = Gomoku.prune(board)
+        v = gomoku.prune(board)
 
         for i in range(13):
             for k in range(13):
@@ -133,13 +135,13 @@ def GUIWindow():
         if board[coords[0]][coords[1]] != 0:
             aiTurn = False
         else:
-            Gomoku.place(-1, (coords))
+            gomoku.place(-1, (coords))
         draw_window()
 
         if aiTurn:
             #aiMove = lengthOptimizer(1, board)
             #aiMove = minimax(1, board, _depth=2)[0]
-            aiMove = Gomoku.placeAiMove(1, board, func=Gomoku.algorithms.lengthOptimizer)
+            gomoku.placeAiMove(1, board, func=gomoku.algorithms.MCTS)
             #res = tf.nn.softmax(model(np.array(board).flatten().reshape(1, 169)))
             #action = np.argmax(res[0])
             #aiMove = (action // 13, action % 13)

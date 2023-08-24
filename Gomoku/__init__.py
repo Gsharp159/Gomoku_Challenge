@@ -1,7 +1,7 @@
 import numpy as np
 import random as rand
 import pygame as pg
-import sys
+import random as r
 import time
 from pygame.locals import *
 import itertools, operator
@@ -174,8 +174,8 @@ def playout(_board, color):
     else:
         tcount = 1
     temp_board = np.copy(_board)
-    while not(gom.checkWin(1, temp_board) or gom.checkWin(-1, temp_board)):
-        moves = gom.pruneCoord(temp_board)
+    while not(checkWin(1, temp_board) or checkWin(-1, temp_board)):
+        moves = pruneCoord(temp_board)
         player = ((tcount % 2) * 2) - 1
         if not moves:
             return 0
@@ -188,8 +188,8 @@ def playout(_board, color):
 def randState(_board, max):
     tcount = 0
     temp_board = np.copy(_board)
-    while (not(gom.checkWin(1, temp_board) or gom.checkWin(-1, temp_board))) and tcount != r.randint(1, max):
-        moves = gom.pruneCoord(temp_board)
+    while (not(checkWin(1, temp_board) or checkWin(-1, temp_board))) and tcount != r.randint(1, max):
+        moves = pruneCoord(temp_board)
         player = ((tcount % 2) * 2) - 1
         if not moves:
             return (temp_board, 0)

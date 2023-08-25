@@ -25,6 +25,45 @@ board = [
 [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], 
 [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]]
 
+
+#returns longest chain in a 1D list
+def checkLine(line, _color, bd=True):
+    
+    if (_color in line) and (len(line) > 0):
+        r = max((list(y) for (x,y) in itertools.groupby((enumerate(line)),operator.itemgetter(1)) if x == _color), key=len)
+
+        if bd:
+            if (r[0][0] > 0):
+                l_blocked = (line[r[0][0] - 1] == (_color * -1))
+            else:
+                l_blocked = True
+
+            if (r[-1][0] != (len(line) - 1)):
+                r_blocked = (line[r[-1][0] + 1] == (_color * -1))
+            else:
+                r_blocked = True
+
+            if not (l_blocked and r_blocked):
+                sequential = (r[-1][0] - r[0][0]) + 1# if (r[-1][0] - r[0][0]) + 1 > sequential_vert else sequential_vert
+            else:
+                if (r[-1][0]-r[0][0]) > 0:
+                    sub = list(copy(line))
+                    for i in range(r[0][0], r[-1][0]):
+                        sub.pop(r[0][0])
+                    sequential = checkLine(sub, _color)
+                else:
+                    sequential = 0
+
+            return sequential
+
+        else:
+            #
+            #Case: block detect False, incomplete
+            #
+            pass
+
+    return 0
+
 #Returns the longest sequence of pieces for a given color. 'block_detect' determines whether it overrides blocked sequences to zero
 def longestSequential(color, board, block_detect=True):
     def getPD(index):
@@ -35,69 +74,33 @@ def longestSequential(color, board, block_detect=True):
         arr = np.array(board)
         return np.diag(np.fliplr(arr), index)
     
-    #Defined so it didn't need to be rewritten 4 times for horiz, vert, etc
-    def checkLine(line, bd=block_detect, _color=color):
-        if (_color in line) and (len(line) > 0):
-            r = max((list(y) for (x,y) in itertools.groupby((enumerate(line)),operator.itemgetter(1)) if x == _color), key=len)
 
-            if bd:
-                if (r[0][0] > 0):
-                    l_blocked = (column[r[0][0] - 1] == (_color * -1))
-                else:
-                    l_blocked = True
-
-                if (r[-1][0] != (BOARD_SIZE - 1)):
-                    r_blocked = (column[r[-1][0] + 1] == (_color * -1))
-                else:
-                    r_blocked = True
-
-                if not (l_blocked and r_blocked):
-                    sequential = (r[-1][0] - r[0][0]) + 1 if (r[-1][0] - r[0][0]) + 1 > sequential_vert else sequential_vert
-                else:
-                    #sub = line[0:r[0][0]] + line[r[-1][0] + 1:-1]
-                    sub = list(copy(line))
-                    if (r[0][0]-r[-1][0]) > 0:
-                        for i in range(r[0][0], r[-1][0] + 1):
-                            sub.pop(i)
-                        sequential = checkLine(sub, bd)
-                    else:
-                        sequential = 0
-
-                return sequential
-
-            else:
-                #
-                #Case: block detect False, incomplete
-                #
-                pass
-
-        return 0
 
     #check vert
     sequential_vert = 0
     for ind in range(BOARD_SIZE):
         column = [board[i][ind] for i in range(BOARD_SIZE)]
-        if (Length := checkLine(column, block_detect, color)) > sequential_vert:
+        if (Length := checkLine(column, color, block_detect)) > sequential_vert:
             sequential_vert = Length
 
     #check horiz
     sequential_hor = 0
     for row in board:
-        if (Length := checkLine(row, block_detect, color)) > sequential_hor:
+        if (Length := checkLine(row, color, block_detect)) > sequential_hor:
             sequential_hor = Length
 
     #check positive diag
     sequential_pd = 0
     for ind in range((-BOARD_SIZE - 1), (BOARD_SIZE - 1)):
         line = getPD(ind)
-        if (Length := checkLine(line, block_detect, color)) > sequential_pd:
+        if (Length := checkLine(line, color, block_detect)) > sequential_pd:
             sequential_pd = Length
 
     #check negative diag
     sequential_nd = 0
     for ind in range((-BOARD_SIZE - 1), (BOARD_SIZE - 1)):
         line = getND(ind)
-        if (Length := checkLine(line, block_detect, color)) > sequential_nd:
+        if (Length := checkLine(line, color, block_detect)) > sequential_nd:
             sequential_nd = Length
 
 
@@ -142,7 +145,7 @@ def pruneCoord(_board):
                     for w in range(-1, 2):
                         if (i+z < 0) or (i+z >= BOARD_SIZE) or (k+w < 0) or (k+w >= BOARD_SIZE):
                             continue
-                        elif _board[i+z][k+w] == 0:
+                        elif _board[i+z][k+w] == 0 and (not (i+z, k+w) in valid):
                             valid.append((i+z, k+w))
     
     return valid
@@ -266,9 +269,12 @@ def evaluateMoves(_board, coords=True, onPiece=False):
 
     return moves
 
+#returns moves that are immediately threatening (for OR against, this function is to narrow the move space)
 def threatSpace(_board, color):
-    #? uh? same as isChain in evaluateMoves, but rather than checking consecutive, check specific patterns
     #open 4
+    for row in _board:
+        if checkLine(row, color) == 4:
+            pass
 
     #single block 4
 
@@ -276,6 +282,16 @@ def threatSpace(_board, color):
 
     #broken 3
     return None
+
+#scores position/player based on favorable structures
+def heuristicScore(_board):
+    #closed 4
+    
+    #open 4
+    #open 3
+    #broken 3
+    #far blocked 3
+    pass
 
 def linesAnalysis(_board, color):
     #should lines be weighted differently for threat/ non threat (i.e built out of opposite vs self color)
@@ -328,6 +344,8 @@ def linesAnalysis(_board, color):
 #print(np.array(linesAnalysis(board, 0)))
 
 def place(color, coord):
+    if board[coord[0]][coord[1]] != 0:
+        raise Exception('Error: Attempted to place a piece in an occupied intersection')
     board[coord[0]][coord[1]] = color
 
 def placeAiMove(color, _board, func):

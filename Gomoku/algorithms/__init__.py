@@ -1,8 +1,8 @@
-import sys; sys.path.append('/Users/Gage/Desktop/Code/Python/Gomoku')
+#import sys; sys.path.append('/Users/Gage/Desktop/Code/Python/Gomoku')
 from gomoku import *
 from copy import deepcopy
-
-
+import math
+import time
 
 local_board = [
 [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], 
@@ -102,7 +102,7 @@ def MCTS(color, _board, iterations=10):
 
             #On birth of node, playout each available move
             for i, k in self.available_moves:
-                temp = deepcopy(self.arg_board)
+                temp = [i[:] for i in self.arg_board]
                 temp[i][k] = self.node_color
 
                 p = playout(temp, self.node_color * -1)
@@ -116,26 +116,35 @@ def MCTS(color, _board, iterations=10):
                     self.wins += 1
                     self.games += 1
 
-            print(self.results)
 
-        def addChild(self, obj):
-            self.children[np.argmax([(w / g) if g != 0 else 0 for w, g in self.results])] = obj
+        def addChild(self, obj, index):
+            self.children[index] = obj
 
         def getNextMove(self, as_index=False):
+
+            UCT = []
+            c = 1.5
+
+            for w, g in self.results:
+                UCT.append((w / g) + (c * (math.log(self.wins)/g)))
+
             if as_index:
-                return np.argmax([(w / g) if g != 0 else 0 for w, g in self.results])
+                return np.argmax(UCT)
             else:
-                return self.available_moves[np.argmax([(w / g) if g != 0 else 0 for w, g in self.results])]
+                return self.available_moves[np.argmax(UCT)]
+            
+        def getMostGames(self):
+            return self.available_moves[np.argmax([g for w, g in self.results])]
         
         def getBestChild(self):
             #print([(w / g) for w, g in self.results])
             return self.children[np.argmax([(w / g) if g != 0 else 0 for w, g in self.results])]
         
         def getNextState(self):
-            temp = deepcopy(self.arg_board)
+            temp_2 = [i[:] for i in self.arg_board]
             move = self.getNextMove()
-            temp[move[0]][move[1]] = self.node_color
-            return temp
+            temp_2[move[0]][move[1]] = self.node_color
+            return temp_2
         
         def getParent(self):
             return self.parent
@@ -157,9 +166,8 @@ def MCTS(color, _board, iterations=10):
         
     #make this the actual main func and move class to outside func
     #main first node
-    root = MCTS_Node(local_board)
+    root = MCTS_Node(_board)
     def mcts_drive(node, a_board):
-        print(node.results)
         if node.isTerminal():
             if checkWin(node.node_color, node.arg_board):
                 node.backprop((1, 1))
@@ -170,25 +178,26 @@ def MCTS(color, _board, iterations=10):
 
         #establish working node
         if node.getBestChild() == None: #This node has been generated but doesn't have children
-            newchild = MCTS_Node(a_board, n_color=node.node_color * -1, parent=node)
-            node.addChild(newchild)
+            newchild = MCTS_Node(node.getNextState(), n_color=node.node_color * -1, parent=node)
+            node.addChild(newchild, node.getNextMove(as_index=True))
             node.backprop((newchild.wins, newchild.games))
         else: #This node was generated and has a child of its own
             child = node.getBestChild()
             mcts_drive(child, node.getNextState()) #keep going until node without children (i.e leaf)
 
 
+
+    
+    start = time.time()
     for i in range(iterations):
         mcts_drive(root, _board)
-        print(root.wins, root.games)
+    end = time.time()
+    print('ITERATIONS:', iterations)
+    print('AVERAGE ITERATION TIME:', (end - start)/iterations)
 
-    return root.getNextMove()
+    return root.getMostGames()
 
 
 if __name__ == '__main__':
+
     print(MCTS(-1, local_board))
-    #once initialized, pick best one and go from there
-
-    #update
-
-    #is there a better first move? try this one etc

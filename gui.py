@@ -3,7 +3,7 @@ import pygame as pg
 import tensorflow as tf
 import numpy as np
 import sys
-from copy import copy
+from copy import deepcopy
 
 print('done imports')
 #
@@ -141,7 +141,7 @@ def GUIWindow():
         if aiTurn:
             #aiMove = lengthOptimizer(1, board)
             #aiMove = minimax(1, board, _depth=2)[0]
-            gomoku.placeAiMove(1, board, func=gomoku.algorithms.MCTS)
+            gomoku.placeAiMove(1, deepcopy(board), func=gomoku.algorithms.MCTS)
             #res = tf.nn.softmax(model(np.array(board).flatten().reshape(1, 169)))
             #action = np.argmax(res[0])
             #aiMove = (action // 13, action % 13)

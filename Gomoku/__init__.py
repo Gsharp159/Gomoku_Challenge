@@ -25,7 +25,6 @@ board = [
 [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], 
 [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]]
 
-
 #returns longest chain in a 1D list
 def checkLine(line, _color, bd=True):
     
@@ -154,10 +153,11 @@ def pruneCoord(_board):
 #Probably useless, only temporary as I haven't implemented a turn counter yet
 def pieces(color, _board):
     count = 0
+    _board = _board.reshape(13, 13)
 
-    for i in range(BOARD_SIZE):
-        for k in range(BOARD_SIZE):
-            if _board[i][k] == color:
+    for row in _board:
+        for piece in row:
+            if piece != 0:
                 count += 1
     
     return count
@@ -352,4 +352,39 @@ def placeAiMove(color, _board, func):
     aiMove = func(color, _board)
     place(color, aiMove)
             
+def reset():
+    board = [[ 0 for k in range(BOARD_SIZE)] * BOARD_SIZE]
+    return np.array(board).flatten()
 
+def black_step(move, board):
+    bx, by = (move // 13, move % 13)
+    board = board.reshape(13, 13)
+    start_ls = longestSequential(1, board)
+    start_wls = longestSequential(-1, board)
+    incorrect = False
+
+    if (pieces(1, board) + pieces(-1, board)) >= 167:
+        return np.array(board).flatten(), 0, True
+    else:
+        if board[bx][by] != 0:
+            incorrect = True
+        board[bx][by] = 1
+        #white move
+        w_move = r.choices(pruneCoord(board))[0]
+        wx, wy = w_move
+        board[wx][wy] = -1
+
+    
+    
+    if checkWin(1, board):
+        reward = 1 if checkWin(1, board) else 0
+        return np.array(board).flatten(), reward, True
+    if checkWin(-1, board):
+        reward = -1 if checkWin(-1, board) else 0
+        return np.array(board).flatten(), reward, True
+
+    reward = (((longestSequential(1, board) - start_ls) / 10) * start_ls) - (((longestSequential(-1, board) - start_wls) / 10) * start_wls)
+    if incorrect:
+        reward = -1
+
+    return np.array(board).flatten(), reward, False
